@@ -8,9 +8,9 @@ window.onload = function(){
 	}
 
 	const db_name = 'mydb';
-	const db_version = 1;
+	var db_version = 1;
 	const db_store_name = 'dbstore';
-	
+	//按钮
 	const add = $("add");
 	const show = $("show");
 	const find = $("find");
@@ -19,30 +19,50 @@ window.onload = function(){
 	const delbtn = $("delbtn");
 	const clear = $("clear");
 	const findRange = $("findRange");
-
+	const createDatabase = $("createDatabase");
+	const deleteDatabase = $("deleteDatabase");
+	//输入框
 	var name = $("name");
 	var age = $("age");
 	var delname = $("delname");
 	var startId = $("startId");
 	var findname = $("findname");
 	var endId = $("endId");
-	var showArea = $("showArea");
-	var findResult = $("findResult");
-	var delResult = $("delResult");
 	var note = $("note");
 	var db;
 
+	//数据库创建与删除方法
+	function createIndexedDB(){
+		note.innerHTML = "";
+		var openRequest = indexedDB.open(db_name, db_version);
+		openRequest.onerror = function(event){
+			console.log("fail to open: " + event.target.errorCode);
+		};
+		openRequest.onsuccess = function(event){
+			note.innerHTML = "indexedDB success created, version: " + db_version;
+			db = this.result;
+		};
+		openRequest.onupgradeneeded = function(event){
+			var store = event.target.result.createObjectStore(db_store_name, {keyPath: 'id', autoIncrement: true});
+			//创建索引
+			store.createIndex('name', 'name', {unique: false});
+		}
+	}
+	// function deleteIndexedDB(){
+	// 	note.innerHTML = "";
+	// 	var deleteDbRequest = indexedDB.deleteDatabase(db_name);
+	// 	deleteDbRequest.onerror = function(event){
+	// 		note.innerHTML = "fail to deleteDatabase: " + event.target.errorCode;
+	// 	}
+	// 	deleteDbRequest.onsuccess = function(event){
+	// 		note.innerHTML = "deleteDatabase successed";
+	// 	}
+	// }
+	
+
 	//初始化数据库
-	var request = indexedDB.open(db_name, db_version);
-	request.onerror = function(event){
-		console.log("fail to open: " + event.target.errorCode);
-	}
-	request.onsuccess = function(event){
-		db = this.result;
-	}
-	request.onupgradeneeded = function(event){
-		var store = event.target.result.createObjectStore(db_store_name, {keyPath: 'id',  autoIncrement: true}); 
-	}
+	createIndexedDB();
+
 	//添加数据
 	function addInfo(nameVal, ageVal){
 		var transaction = db.transaction(db_store_name, 'readwrite');
@@ -84,22 +104,22 @@ window.onload = function(){
 
 	}
 	//查找
-	function findInfo(name){
+	function findInfo(id){
 		note.innerHTML = "";
 		var transaction = db.transaction(db_store_name, 'readwrite');
 		var store = transaction.objectStore(db_store_name);
-		var req = store.get(name);
+		var req = store.get(id);
 		req.onerror = function(event){
 			note.innerHTML = "fail to findKey: " + event.target.errorCode;
 		}
 		req.onsuccess = function(event){
 			var result = event.target.result;
 			if(!result){
-				note.innerHTML = "not found " + name;
+				note.innerHTML = "not found " + id;
 				return
 			}
 			var elem = document.createElement("div");
-			elem.appendChild(document.createTextNode(result.name + "-" + result.age));
+			elem.appendChild(document.createTextNode(id + " : " + result.name + "-" + result.age));
 			note.appendChild(elem);
 		}
 	}
@@ -146,7 +166,7 @@ window.onload = function(){
 		note.innerHTML = "";
 		var transaction = db.transaction(db_store_name, 'readwrite');
 		var store = transaction.objectStore(db_store_name);
-		var range = IDBKeyRange.bound(start, end);
+		var range = IDBKeyRange.bound(start, end, false, false);
 		var req = store.openCursor(range);
 		req.onerror = function(event){
 			note.innerHTML = "fail to findRangeInfo" + event.target.errorCode;
@@ -164,48 +184,52 @@ window.onload = function(){
 		}
 	}
 	//索引查询
-	// function handleAsName(name){
-	// 	note.innerHTML = "";
-	// 	var transaction = db.transaction(db_store_name);
-	// 	var store = transaction.objectStore(db_store_name);
-	// 	var index = store.index("name");
-	// 	index.openCursor().onsuccess = function(event){
-	// 		var cursor = event.target.result;
-	// 		if(cursor){
-	// 			if(cursor.key == name){
-	// 				var elem = document.createElement("div");
-	// 				elem.appendChild(document.createTextNode(cursor.key + " : [" + cursor.value.id + "-" + cursor.value.age + "]"));
-	// 				note.appendChild(elem);
-	// 				cursor.continue();
-	// 			}		
-	// 		}else{
-	// 			console.log("done");
-	// 		}
-	// 	}
-	// }
+	function handleAsName(name){
+		note.innerHTML = "";
+		var transaction = db.transaction(db_store_name);
+		var store = transaction.objectStore(db_store_name);
+		var index = store.index("name");
+		var range = IDBKeyRange.only(name);
+		index.openCursor(range).onsuccess = function(event){
+			var cursor = event.target.result;
+			if(cursor){
+				if(cursor.key == name){
+					var elem = document.createElement("div");
+					elem.appendChild(document.createTextNode(cursor.value.id + " : [" + cursor.key + "-" + cursor.value.age + "]"));
+					note.appendChild(elem);
+					cursor.continue();
+				}
+			}else{
+				console.log("done");
+			}
+		}
+	}
 
-	// findAsName.onclick = function(){
-	// 	var findnameVal = findname.value;
-	// 	if(!findnameVal) return;
-	// 	handleAsName(findnameVal);
-	// };
+	findAsName.onclick = function(){
+		var findnameVal = findname.value;
+		if(!findnameVal) return;
+		handleAsName(findnameVal);
+	};
 	findRange.onclick = function(){
-		var startVal = startId.value;
-		var endVal = endId.value;
+		var startVal = Number(startId.value);
+		var endVal = Number(endId.value);
 		if(!startVal || !endVal) return;
 		findRangeInfo(startVal, endVal);
 	}
 
 	clear.onclick = function(){
-		clearAll();
+		var bol = confirm('确定要清空数据库吗？');
+		if(bol){
+			clearAll();
+		}		
 	}
 	delbtn.onclick = function(){
-		var delKey = delname.value;
+		var delKey = Number(delname.value);
 		if(!delKey) return;
 		deleteInfo(delKey);
 	}
 	findValue.onclick = function(){
-		var nameKey = find.value;
+		var nameKey = Number(find.value);
 		if(!name) return;
 		findInfo(nameKey);
 	}
@@ -219,6 +243,11 @@ window.onload = function(){
 		if(!nameVal || !ageVal) return;
 		addInfo(nameVal, ageVal);
 	}
-
-
+	// deleteDatabase.onclick = function(){
+	// 	deleteIndexedDB();
+	// }
+	createDatabase.onclick = function(){
+		db_version++;
+		createIndexedDB();
+	}
 }

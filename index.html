@@ -22,7 +22,6 @@
 <div class="box">
 	<div class="title">信息展示</div>
 	<button id="show">showAllInfo</button>
-	<div id="showArea"></div>
 </div>
 
 <div class="box">
@@ -32,7 +31,7 @@
 </div>
 
 <div class="box disabled">
-	<div class="title">按姓名查找(暂时无法使用)</div>
+	<div class="title">按姓名查找</div>
 	<div><label for="findname"><input type="text" id="findname" placeholder="输入正确的姓名"></label></div>
 	<button id="findAsName">find</button>
 </div>
@@ -46,9 +45,15 @@
 
 <div class="box">
 	<div class="title">范围查找</div>
-	<div><label for="startId">start:&nbsp;<input type="text" id="startId"></label></div>
-	<div><label for="endId">end:&nbsp;&nbsp;<input type="text" id="endId"></label></div>
+	<div><label for="startId">start:&nbsp;<input type="text" id="startId" placeholder="输入正确的ID"></label></div>
+	<div><label for="endId">end:&nbsp;&nbsp;<input type="text" id="endId" placeholder="输入正确的ID"></label></div>
 	<div><button id="findRange">findRange</button></div>
+</div>
+
+<div class="box">
+	<div class="title">创建删除数据库(未实现)</div>
+	<div><button id="createDatabase" disabled>createDatabase</button></div>
+	<div><button id="deleteDatabase" disabled>deleteDatabase</button></div>
 </div>
 
 <div class="box note_box">
